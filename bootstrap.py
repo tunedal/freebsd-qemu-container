@@ -42,7 +42,7 @@ qemu_args = ["-m", "4096",
              "-hda", "/boot.qcow2",
              "-hdb", "/custom.qcow2"]
 
-child = pexpect.spawn("qemu-system-x86_64", qemu_args, timeout=120)
+child = pexpect.spawn("qemu-system-x86_64", qemu_args, timeout=120, echo=False)
 child.logfile = sys.stdout.buffer
 
 crashed = 1
@@ -57,6 +57,8 @@ while crashed:
 child.sendline("/bin/sh")
 
 blob = b64encode(bootstrap_script.encode("utf-8")).decode("ascii")
+child.expect("root@.*$")
+child.sendline("stty -icanon")
 child.expect("root@.*$")
 child.sendline(f"echo '{blob}'|b64decode -r|sh -s")
 
