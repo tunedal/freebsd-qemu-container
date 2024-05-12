@@ -21,12 +21,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Determine image tags
+        id: determine-tags
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          case "$BRANCH_NAME" in
+            main | master )
+              echo IMAGE_TAGS=latest "$BRANCH_NAME" >>"$GITHUB_OUTPUT"
+              ;;
+            * )
+              echo IMAGE_TAGS="$BRANCH_NAME" >>"$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Buildah Action
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ github.ref_name }}
+          tags: ${{ steps.determine-tags.outputs.IMAGE_TAGS }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
           containerfiles: |
