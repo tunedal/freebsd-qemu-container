@@ -56,11 +56,23 @@ while crashed:
 
 child.sendline("/bin/sh")
 
-blob = b64encode(bootstrap_script.encode("utf-8")).decode("ascii")
 child.expect("root@.*$")
 child.sendline("stty -icanon")
+
 child.expect("root@.*$")
-child.sendline(f"echo '{blob}'|b64decode -r|sh -s")
+child.sendline("mount -rw /")
+
+blob = b64encode(bootstrap_script.encode("utf-8")).decode("ascii")
+chunk_size = 40
+for i in range(0, len(blob), chunk_size):
+    chunk = blob[i:i+chunk_size]
+    child.expect("root@.*$")
+    child.sendline(f"echo '{chunk}' >>bootstrap.base64")
+
+child.expect("root@.*$")
+child.sendline("b64decode -r <bootstrap.base64 >bootstrap.sh")
+child.expect("root@.*$")
+child.sendline("sh bootstrap.sh")
 
 child.expect(r"Bootstrap script finished\.")
 child.close()
