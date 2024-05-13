@@ -1,2 +1,3 @@
 *.qcow2
 config/config.sh
+config/config.tar.gz

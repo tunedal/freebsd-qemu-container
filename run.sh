@@ -3,10 +3,17 @@
 set -eu
 
 BASEDIR="$(dirname "$0")"
+CONFIG_TEMPDIR="$(mktemp -d)"
 
-cp "$BASEDIR/config/config.example.sh" "$BASEDIR/config/config.sh"
-echo -n "echo '$(cat ~/.ssh/id_*.pub|base64 -w0)'" >>"$BASEDIR/config/config.sh"
-echo '|b64decode -r >>/root/.ssh/authorized_keys' >>"$BASEDIR/config/config.sh"
+trap 'rm -rf "$CONFIG_TEMPDIR"' EXIT
+
+if ! test -f "$BASEDIR/config/config.sh"; then
+    cp "$BASEDIR/config/config.example.sh" "$CONFIG_TEMPDIR/config.sh"
+    cat ~/.ssh/id_*.pub >"$CONFIG_TEMPDIR/authorized_keys"
+    tar zcf "$BASEDIR/config/config.tar.gz" -C "$CONFIG_TEMPDIR" .
+fi
+
+rm -rf "$CONFIG_TEMPDIR"
 
 exec podman run -it \
      -p 2222:2222 \

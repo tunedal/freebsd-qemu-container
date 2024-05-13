@@ -9,5 +9,4 @@ service sshd onestart
 
 mkdir -p /root/.ssh
 chmod 600 /root/.ssh
-
-# Insert public keys here.
+cp "$(dirname "$0")/authorized_keys" /root/.ssh/

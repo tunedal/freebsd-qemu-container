@@ -13,7 +13,8 @@ rc_local = dedent(r"""
   cd "$(mktemp -d)"
 
   echo 'Fetching customizations via TFTP.'
-  printf '%s\n' 'binary' 'get config.sh'|tftp 10.0.3.2
+  printf '%s\n' 'binary' 'get config.tar.gz' 'get config.sh'|tftp 10.0.3.2
+  test -f config.tar.gz && tar zxvf config.tar.gz
 
   echo 'Executing customizations.'
   exec sh config.sh
