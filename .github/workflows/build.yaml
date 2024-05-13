@@ -20,20 +20,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
       - name: Determine image tags
         id: determine-tags
-        env:
-          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          case "$BRANCH_NAME" in
+          tags=()
+          case "$GITHUB_REF_NAME" in
             main | master )
-              echo IMAGE_TAGS=latest "$BRANCH_NAME" >>"$GITHUB_OUTPUT"
-              ;;
-            * )
-              echo IMAGE_TAGS="$BRANCH_NAME" >>"$GITHUB_OUTPUT"
+              tags+=(latest)
               ;;
           esac
+          tags+=("$GITHUB_REF_NAME")
+          readarray -t -O ${#tags[@]} tags < \
+            <(git tag --points-at "$GITHUB_SHA" \
+                      --format '%(refname:lstrip=-1)' |
+              grep -E '^v[0-9]' |
+              sed -r 's/^v//')
+          echo "Image tags: ${tags[@]}"
+          echo IMAGE_TAGS="${tags[@]}" >>"$GITHUB_OUTPUT"
 
       - name: Buildah Action
         id: build-image
