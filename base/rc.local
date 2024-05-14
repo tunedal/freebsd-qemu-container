@@ -4,8 +4,20 @@ set -eu
 cd "$(mktemp -d)"
 
 echo 'Fetching customizations via TFTP.'
-printf '%s\n' 'binary' 'get config.tar.gz' 'get config.sh'|tftp 10.0.3.2
+printf '%s\n' 'binary' \
+       'get config.tar.gz' \
+       'get config.sh' \
+       'get authorized_keys' \
+    | tftp 10.0.3.2
+
 test -f config.tar.gz && tar zxvf config.tar.gz
+
+if test -f authorized_keys; then
+    service sshd onestart
+    mkdir -p /root/.ssh
+    chmod 600 /root/.ssh
+    cp authorized_keys /root/.ssh/
+fi
 
 echo 'Executing customizations.'
 exec sh config.sh

@@ -19,6 +19,7 @@ bootstrap_script = dedent(fr"""
   growfs -y /dev/ada1p4
   mount -o noatime /dev/ada1p4 /mnt
   echo 'autoboot_delay="3"' >>/mnt/boot/loader.conf
+  echo 'PermitRootLogin prohibit-password' >>/mnt/etc/ssh/sshd_config
   echo -n {quote(b64encode(rc_local.encode("utf-8")).decode("ascii"))} \
     | b64decode -r >/mnt/etc/rc.local
   umount /mnt
