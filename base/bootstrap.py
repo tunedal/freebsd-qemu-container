@@ -4,21 +4,12 @@ import sys
 from base64 import b64encode
 from textwrap import dedent
 from shlex import quote
+from pathlib import Path
 
 import pexpect
 
 # Script written to /etc/rc.local in custom.qcow2.
-rc_local = dedent(r"""
-  set -eu
-  cd "$(mktemp -d)"
-
-  echo 'Fetching customizations via TFTP.'
-  printf '%s\n' 'binary' 'get config.tar.gz' 'get config.sh'|tftp 10.0.3.2
-  test -f config.tar.gz && tar zxvf config.tar.gz
-
-  echo 'Executing customizations.'
-  exec sh config.sh
-""").lstrip()
+rc_local = (Path(__file__).parent / "rc.local").read_text()
 
 # Script executed in boot.qcow2.
 bootstrap_script = dedent(fr"""
@@ -52,6 +43,7 @@ while crashed:
     child.send("s")
 
     # Sometimes the VM crashes on boot, but it's usually fine on the next try.
+    # This only seems to happen with more than one CPU.
     crashed = child.expect(["Enter full pathname of shell.*$",
                             "Automatic reboot in 15 seconds"])
 

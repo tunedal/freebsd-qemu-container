@@ -15,13 +15,15 @@ RUN curl -O "$FBSD_URL/$FBSD_VERSION/amd64/Latest/$IMG_FILENAME" && \
     echo "SHA256 ($IMG_FILENAME) = $IMG_HASH"|sha256sum -c --strict - && \
     unxz "$IMG_FILENAME"
 
-COPY bootstrap.py /
+RUN mkdir -p /mnt/config /bootstrap
+
+COPY bootstrap.py rc.local /bootstrap
 
 RUN ln -s "$(basename "$IMG_FILENAME" .xz)" freebsd.qcow2 && \
     qemu-img create -f qcow2 -F qcow2 -b freebsd.qcow2 boot.qcow2 && \
     qemu-img create -f qcow2 -F qcow2 -b freebsd.qcow2 custom.qcow2 8G && \
-    python3 /bootstrap.py && \
-    rm /bootstrap.py boot.qcow2
+    python3 /bootstrap/bootstrap.py && \
+    rm -rf /bootstrap boot.qcow2
 
 EXPOSE 2222
 
