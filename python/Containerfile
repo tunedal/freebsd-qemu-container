@@ -1,4 +1,5 @@
-FROM ghcr.io/tunedal/freebsd-qemu-container
+ARG base=ghcr.io/tunedal/freebsd-qemu-container:latest
+FROM ${base}
 
 RUN mkdir config
 

@@ -13,10 +13,6 @@ jobs:
       contents: read
       packages: write
 
-    outputs:
-      image-url: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\
-                  @${{ steps.push-to-ghcr.outputs.digest }}"
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,16 +37,31 @@ jobs:
           echo "Image tags: ${tags[@]}"
           echo IMAGE_TAGS="${tags[@]}" >>"$GITHUB_OUTPUT"
 
-      - name: Buildah Action
-        id: build-image
+      - name: Build base container image
+        id: build-base-image
         uses: redhat-actions/buildah-build@v2
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.determine-tags.outputs.IMAGE_TAGS }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
+          context: base
           containerfiles: |
-            ./Containerfile
+            base/Containerfile
+
+      - name: Build Python container image
+        id: build-python-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}-python
+          tags: ${{ steps.determine-tags.outputs.IMAGE_TAGS }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          context: python
+          containerfiles: |
+            python/Containerfile
+          build-args: |
+            base=${{ steps.build-base-image.outputs.image-with-tag }}
 
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
@@ -59,10 +70,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push to GitHub container registry
-        id: push-to-ghcr
+      - name: Push base image to GitHub container registry
+        id: push-base-to-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
+          image: ${{ steps.build-base-image.outputs.image }}
+          tags: ${{ steps.build-base-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+
+      - name: Push Python image to GitHub container registry
+        id: push-python-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-python-image.outputs.image }}
+          tags: ${{ steps.build-python-image.outputs.tags }}
           registry: ${{ env.REGISTRY }}
