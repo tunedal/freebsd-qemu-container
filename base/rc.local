@@ -5,14 +5,25 @@ cd "$(mktemp -d)"
 
 echo 'Fetching customizations via TFTP.'
 printf '%s\n' 'binary' \
-       'get config.tar.gz' \
-       'get config.sh' \
-       'get authorized_keys' \
+       'get config/config.tar.gz' \
+       'get config/config.sh' \
+       'get config/authorized_keys' \
+       'get host_keys.tar.gz' \
+       'get client_key.pub' \
     | tftp 10.0.3.2
 
-test -f config.tar.gz && tar zxvf config.tar.gz
+test -s config.tar.gz && tar zxvf config.tar.gz
 
-if test -f authorized_keys; then
+if test -s client_key.pub; then
+    cat client_key.pub >>authorized_keys
+fi
+
+if test -s host_keys.tar.gz; then
+    tar zxvf host_keys.tar.gz -C /etc/ssh --include 'ssh_host_*_key*'
+fi
+
+# Enable SSH unless authorized_keys is empty.
+if test -s authorized_keys; then
     service sshd onestart
     mkdir -p /root/.ssh
     chmod 600 /root/.ssh

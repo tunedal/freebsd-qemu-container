@@ -15,9 +15,16 @@ customizations:
 
 * The boot prompt delay is reduced from 10 to 3 seconds.
 * ``PermitRootLogin prohibit-password`` is added to ``sshd_config``.
-* ``/etc/rc.local`` is set up to fetch ``config.sh`` and
-  ``authorized_keys`` via TFTP. If the latter exists, it's copied to
-  ``/root/.ssh`` and the SSH service is started.
+* ``/etc/rc.local`` is set up to fetch configuration via TFTP.
+
+  * ``config.sh``, ``authorized_keys`` and ``config.tar.gz`` are fetched
+    from ``/mnt/config`` if they exist.
+  * ``config.tar.gz`` is extracted.
+  * If ``authorized_keys`` exists and is non-empty, it's copied to
+    ``/root/.ssh`` and the SSH service is started. If it does not exist,
+    SSH keys are generated in the container and copied to the host
+    and to ``/mnt/config`` and the SSH service is started.
+  * Finally ``config.sh`` is executed.
 
 The ``python`` directory builds an image with various versions of
 Python installed.

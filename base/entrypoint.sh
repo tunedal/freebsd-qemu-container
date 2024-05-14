@@ -2,6 +2,9 @@
 
 set -eu
 
+tempdir="$(mktemp -d)"
+ln -s /mnt/config "$tempdir/config"
+
 have_image=0
 have_snap=0
 if test -f /mnt/config/snap.qcow2; then
@@ -21,6 +24,21 @@ else
     image=/custom.qcow2
 fi
 
+if ! test -f /mnt/config/authorized_keys; then
+    ssh-keygen -q -t ed25519 -N "" -f "$tempdir/client_key"
+
+    mkdir "$tempdir/host_keys"
+    for alg in rsa dsa ecdsa ed25519; do
+        ssh-keygen -q -t "$alg" -N "" \
+                   -f "$tempdir/host_keys/ssh_host_${alg}_key"
+    done
+    tar zcf "$tempdir/host_keys.tar.gz" -C "$tempdir/host_keys" .
+
+    cp "$tempdir"/{client_key,client_key.pub} /mnt/config/
+    cat "$tempdir/host_keys"/*.pub \
+        | awk '{ print "* " $0 }' >/mnt/config/known_hosts
+fi
+
 if test $# -eq 0; then
     extra_args=()
     if test $have_snap -eq 1; then
@@ -38,7 +56,7 @@ if test $# -eq 0; then
          -serial mon:stdio \
          -nographic \
          -drive file="$image" \
-         -nic user,net=10.0.3.0/24,hostfwd=tcp::2222-:22,tftp=/mnt/config \
+         -nic user,net=10.0.3.0/24,hostfwd=tcp::2222-:22,tftp="$tempdir" \
          "${extra_args[@]}"
 else
     exec "$@"

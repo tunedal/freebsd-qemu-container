@@ -1,9 +1,10 @@
 ARG base=ghcr.io/tunedal/freebsd-qemu-container:latest
 FROM ${base}
 
-RUN mkdir config
+RUN mkdir -p shared_files/config && \
+    touch shared_files/config/authorized_keys
 
-COPY customize.sh config/config.sh
+COPY customize.sh shared_files/config/config.sh
 
 RUN mv custom.qcow2 base.qcow2 && \
     qemu-img create -f qcow2 -F qcow2 -b base.qcow2 boot.qcow2 && \
@@ -14,5 +15,5 @@ RUN mv custom.qcow2 base.qcow2 && \
       -nographic \
       -hda boot.qcow2 \
       -hdb custom.qcow2 \
-      -nic user,net=10.0.3.0/24,tftp=./config && \
-    rm -rf boot.qcow2 /config
+      -nic user,net=10.0.3.0/24,tftp=./shared_files && \
+    rm -rf boot.qcow2 shared_files
