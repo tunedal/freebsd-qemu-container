@@ -1,0 +1,17 @@
+FROM ghcr.io/tunedal/freebsd-qemu-container
+
+RUN mkdir config
+
+COPY customize.sh config/config.sh
+
+RUN mv custom.qcow2 base.qcow2 && \
+    qemu-img create -f qcow2 -F qcow2 -b base.qcow2 boot.qcow2 && \
+    qemu-img create -f qcow2 -F qcow2 -b base.qcow2 custom.qcow2 && \
+    qemu-system-x86_64 -m 4096 -smp 1 \
+      -bios /usr/share/ovmf/OVMF.fd \
+      -serial mon:stdio \
+      -nographic \
+      -hda boot.qcow2 \
+      -hdb custom.qcow2 \
+      -nic user,net=10.0.3.0/24,tftp=./config && \
+    rm -rf boot.qcow2 /config
