@@ -25,11 +25,7 @@ RUN ln -s "$(basename "$IMG_FILENAME" .xz)" freebsd.qcow2 && \
     python3 /bootstrap/bootstrap.py && \
     rm -rf /bootstrap boot.qcow2
 
-EXPOSE 2222
+COPY entrypoint.sh /
 
-CMD ["qemu-system-x86_64", "-m", "4096", "-smp", "2", \
-     "-bios", "/usr/share/ovmf/OVMF.fd", \
-     "-serial", "mon:stdio", \
-     "-nographic", \
-     "-drive", "file=custom.qcow2", \
-     "-nic", "user,net=10.0.3.0/24,hostfwd=tcp::2222-:22,tftp=/mnt/config"]
+EXPOSE 2222
+ENTRYPOINT ["/entrypoint.sh"]
