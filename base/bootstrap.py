@@ -35,6 +35,9 @@ qemu_args = ["-m", "4096",
              "-hda", "/boot.qcow2",
              "-hdb", "/custom.qcow2"]
 
+if Path("/dev/kvm").exists():
+    qemu_args.append("-enable-kvm")
+
 child = pexpect.spawn("qemu-system-x86_64", qemu_args, timeout=120, echo=False)
 child.logfile = sys.stdout.buffer
 

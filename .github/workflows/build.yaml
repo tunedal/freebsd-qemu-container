@@ -37,6 +37,22 @@ jobs:
           echo "Image tags: ${tags[@]}"
           echo IMAGE_TAGS="${tags[@]}" >>"$GITHUB_OUTPUT"
 
+      # Until GitHub adds the runner user to the kvm group, this is
+      # more or less the official solution, except we're changing the
+      # owner from root to runner instead of giving all users access.
+      # https://github.com/actions/runner-images/issues/183
+      # https://github.com/actions/runner-images/issues/8542
+      - name: Grab ownership of /dev/kvm
+        run: |
+          ls -l /dev/kvm
+          id
+          test "$(id -un)" = runner || exit 1
+          echo 'KERNEL=="kvm", OWNER="runner", GROUP="kvm", MODE="0660",' \
+               'OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm-for-runner.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Build base container image
         id: build-base-image
         uses: redhat-actions/buildah-build@v2
@@ -48,6 +64,8 @@ jobs:
           context: base
           containerfiles: |
             base/Containerfile
+          extra-args: |
+            --device /dev/kvm
 
       - name: Build Python container image
         id: build-python-image
@@ -62,6 +80,9 @@ jobs:
             python/Containerfile
           build-args: |
             base=${{ steps.build-base-image.outputs.image-with-tag }}
+            extra_qemu_args=-enable-kvm
+          extra-args: |
+            --device /dev/kvm
 
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1

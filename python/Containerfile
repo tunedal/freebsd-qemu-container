@@ -1,5 +1,7 @@
 ARG base=ghcr.io/tunedal/freebsd-qemu-container:latest
+
 FROM ${base}
+ARG extra_qemu_args=
 
 RUN mkdir -p shared_files/config && \
     touch shared_files/config/authorized_keys
@@ -15,5 +17,6 @@ RUN mv custom.qcow2 base.qcow2 && \
       -nographic \
       -hda boot.qcow2 \
       -hdb custom.qcow2 \
-      -nic user,net=10.0.3.0/24,tftp=./shared_files && \
+      -nic user,net=10.0.3.0/24,tftp=./shared_files \
+      ${extra_qemu_args} && \
     rm -rf boot.qcow2 shared_files
