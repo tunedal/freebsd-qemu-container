@@ -1,6 +1,7 @@
 on:
   push:
     branches: ['main', 'ci']
+    tags: ['v[0-9]*']
 
 env:
   REGISTRY: ghcr.io
@@ -16,24 +17,49 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-tags: true
 
       - name: Determine image tags
         id: determine-tags
         run: |
           tags=()
-          case "$GITHUB_REF_NAME" in
-            main | master )
-              tags+=(latest)
-              ;;
+
+          case "$GITHUB_REF_TYPE" in
+          branch )
+            tags+=("$GITHUB_REF_NAME")
+            ;;
+          tag )
+            version="${GITHUB_REF_NAME/#v/}"
+            tags+=("$version")
+            echo "Git version tag: $version"
+
+            readarray -t versions < \
+              <(git ls-remote --tags origin | \
+                awk '/tags\/v[0-9]/ {sub("refs/tags/v", "", $2); print $2}' | \
+                sort -V)
+
+            ver="$version"
+            while test -n "$ver"; do
+                ver="$(echo "$ver"|sed -r 's/\.?[^.]+$//')"
+                prefix="${ver:+$ver.}"
+                tag="${ver:-latest}"
+                latest="$(printf '%s\n' "${versions[@]}" \
+                    | awk -v p="$prefix" 'index($0, p) == 1' \
+                    | sort -V \
+                    | tail -1)"
+                echo
+                echo "Prefix: $prefix"
+                echo "Image tag: $tag"
+                echo "Latest Git version: $latest"
+
+                if test "$latest" = "$version"; then
+                  echo "Updating image tag."
+                  tags+=("$tag")
+                fi
+            done
+            echo
+            ;;
           esac
-          tags+=("$GITHUB_REF_NAME")
-          readarray -t -O ${#tags[@]} tags < \
-            <(git tag --points-at "$GITHUB_SHA" \
-                      --format '%(refname:lstrip=-1)' |
-              grep -E '^v[0-9]' |
-              sed -r 's/^v//')
+
           echo "Image tags: ${tags[@]}"
           echo IMAGE_TAGS="${tags[@]}" >>"$GITHUB_OUTPUT"
 
