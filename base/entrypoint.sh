@@ -24,7 +24,7 @@ else
     image=/custom.qcow2
 fi
 
-if ! test -f /mnt/config/authorized_keys; then
+if test ! -f /mnt/config/authorized_keys -a $have_snap -eq 0; then
     ssh-keygen -q -t ed25519 -N "" -f "$tempdir/client_key"
 
     mkdir "$tempdir/host_keys"
