@@ -124,7 +124,7 @@ jobs:
           docker image ls -a
 
       - name: Run it!
-        with: docker://localhost/${{ job.outputs.BASE_IMAGE }}
+        uses: docker://localhost/${{ job.outputs.BASE_IMAGE }}
 
       # - name: Build Python container image
       #   id: build-python-image
