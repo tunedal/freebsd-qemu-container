@@ -120,12 +120,13 @@ jobs:
           echo "BASE_IMAGE_ID=$BASE_IMAGE_ID" >>"$GITHUB_OUTPUT"
           echo "BASE_IMAGE_DIGEST=$BASE_IMAGE_DIGEST >>"$GITHUB_OUTPUT"
           echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_OUTPUT"
+          echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_ENV
           podman image push "$BASE_IMAGE_ID" docker-daemon:"$IMG_WITH_TAG"
           echo
           docker image ls -a --digests
 
       - name: Run it!
-        uses: docker://localhost/${{ steps.poke.outputs.BASE_IMAGE }}
+        uses: docker://localhost/${{ env.BASE_IMAGE }}
 
       # - name: Build Python container image
       #   id: build-python-image
