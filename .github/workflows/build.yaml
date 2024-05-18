@@ -99,7 +99,7 @@ jobs:
             base/Containerfile
           extra-args: |
             --device /dev/kvm
-            --iidfile ./my-image-id.txt
+            --iidfile base-image-id.txt
 
       - name: Poke at registries
         env:
@@ -109,11 +109,10 @@ jobs:
           echo
           podman image ls -a
           echo
-          echo "Image ID:"
-          ls -l ./my-image-id.txt
-          cat ./my-image-id.txt
-          echo
-          podman image push "$IMG" docker-daemon:"$IMG"
+          BASE_IMAGE_ID="$(cat base-image-id.txt)"
+          echo "Image ID: $BASE_IMAGE_ID"
+          echo "BASE_IMAGE_ID=$BASE_IMAGE_ID" >>"$GITHUB_OUTPUT"
+          podman image push "$BASE_IMAGE_ID docker-daemon:"$IMG"
           echo
           docker image ls -a
 
