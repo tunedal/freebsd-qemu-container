@@ -126,7 +126,9 @@ jobs:
           docker image ls -a --digests
 
       - name: Run it!
-        uses: docker://localhost/${{ env.BASE_IMAGE }}
+        run: |
+          echo "$BASE_IMAGE"
+          podman run "$BASE_IMAGE"
 
       # - name: Build Python container image
       #   id: build-python-image
