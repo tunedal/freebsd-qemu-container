@@ -103,21 +103,28 @@ jobs:
 
       - name: Poke at registries
         env:
-          IMG: ${{ steps.build-base-image.outputs.image-with-tag }}
+          IMG: ${{ steps.build-base-image.outputs.image }}
+          IMG_WITH_TAG: ${{ steps.build-base-image.outputs.image-with-tag }}
         run: |
           docker image ls -a --digests
           echo
           podman image ls -a --digests
           echo
           BASE_IMAGE_ID="$(cat base-image-id.txt)"
+          BASE_IMAGE_DIGEST="$(podman inspect --format '{{.Digest}}')"
+          BASE_IMAGE="$IMG:$BASE_IMAGE_DIGEST"
           echo "Image ID: $BASE_IMAGE_ID"
+          echo "Image digest: $BASE_IMAGE_DIGEST"
+          echo "Image: $BASE_IMAGE"
           echo "BASE_IMAGE_ID=$BASE_IMAGE_ID" >>"$GITHUB_OUTPUT"
-          podman image push "$BASE_IMAGE_ID" docker-daemon:"$IMG"
+          echo "BASE_IMAGE_DIGEST=$BASE_IMAGE_DIGEST >>"$GITHUB_OUTPUT"
+          echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_OUTPUT"
+          podman image push "$BASE_IMAGE_ID" docker-daemon:"$IMG_WITH_TAG"
           echo
           docker image ls -a
 
-      # - name: Run it!
-      #   with: docker://localhost/${{ steps.build-base-image.outputs.image }}
+      - name: Run it!
+        with: docker://localhost/${{ job.outputs.BASE_IMAGE }}
 
       # - name: Build Python container image
       #   id: build-python-image
