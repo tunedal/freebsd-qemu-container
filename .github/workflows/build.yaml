@@ -112,12 +112,18 @@ jobs:
           echo
           BASE_IMAGE_ID="$(cat base-image-id.txt)"
           echo "Image ID: $BASE_IMAGE_ID"
-          echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_ENV"
+          echo "BASE_IMAGE=$BASE_IMAGE" >>"$GITHUB_ENV"
 
       - name: Run it!
         run: |
           echo "$BASE_IMAGE_ID"
-          podman run "$BASE_IMAGE_ID"
+          CONFIGDIR="$(mktemp -d)"
+          cat >"$CONFIGDIR/config.sh" <<"EOF"
+            echo 'Hello world!'
+            uname -a
+            poweroff
+          EOF
+          podman run --rm -v "$CONFIGDIR":/mnt/config "$BASE_IMAGE_ID"
 
       # - name: Build Python container image
       #   id: build-python-image
