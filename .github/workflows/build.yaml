@@ -79,10 +79,17 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Poke at registries 1
+        run: |
+          docker image ls -a
+          echo
+          podman image ls -a
+
       - name: Build base container image
         id: build-base-image
         uses: redhat-actions/buildah-build@v2
         with:
+          layers: true
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.determine-tags.outputs.IMAGE_TAGS }}
           labels: |
@@ -107,6 +114,8 @@ jobs:
           cat ./my-image-id.txt
           echo
           podman image push "$IMG" docker-daemon:"$IMG"
+          echo
+          docker image ls -a
 
       # - name: Build Python container image
       #   id: build-python-image
