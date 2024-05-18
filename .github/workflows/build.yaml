@@ -89,7 +89,6 @@ jobs:
         id: build-base-image
         uses: redhat-actions/buildah-build@v2
         with:
-          layers: true
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.determine-tags.outputs.IMAGE_TAGS }}
           labels: |
@@ -120,7 +119,7 @@ jobs:
           echo "BASE_IMAGE_ID=$BASE_IMAGE_ID" >>"$GITHUB_OUTPUT"
           echo "BASE_IMAGE_DIGEST=$BASE_IMAGE_DIGEST >>"$GITHUB_OUTPUT"
           echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_OUTPUT"
-          echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_ENV
+          echo "BASE_IMAGE=$BASE_IMAGE >>"$GITHUB_ENV"
           podman image push "$BASE_IMAGE_ID" docker-daemon:"$IMG_WITH_TAG"
           echo
           docker image ls -a --digests
